@@ -10,10 +10,11 @@ Este curso práctico va al grano: clasifica los comandos por su **grado de utili
 1. [Filosofía y Mapa del Sistema Operativo en un VPS](#1-filosofía-y-mapa-del-sistema-operativo-en-un-vps)
 2. [Nivel 1: Los IMPRESCINDIBLES (Uso Diario - 90% de tu tiempo)](#2-nivel-1-los-imprescindibles-uso-diario---90-de-tu-tiempo)
    - [Navegación y Archivos](#21-navegación-y-archivos)
-   - [Gestión de Paquetes y Software](#22-gestión-de-paquetes-y-software)
-   - [Control de Servicios (Systemd)](#23-control-de-servicios-systemd)
-   - [Monitoreo de Recursos en Vivo](#24-monitoreo-de-recursos-en-vivo)
-   - [Seguridad y Firewall](#25-seguridad-y-firewall)
+   - [Gestión de Paquetes, Dependencias y Software](#22-gestión-de-paquetes-dependencias-y-software)
+   - [Gestión Completa de PHP: Actualizar y Cambiar entre Versiones](#23-gestión-completa-de-php-actualizar-y-cambiar-entre-versiones)
+   - [Control de Servicios (Systemd)](#24-control-de-servicios-systemd)
+   - [Monitoreo de Recursos en Vivo](#25-monitoreo-de-recursos-en-vivo)
+   - [Seguridad y Firewall](#26-seguridad-y-firewall)
 3. [Nivel 2: Los INTERMEDIOS (Diagnóstico y Emergencias - 8% de tu tiempo)](#3-nivel-2-los-intermedios-diagnóstico-y-emergencias---8-de-tu-tiempo)
    - [Lectura y Monitoreo de Logs en Vivo](#31-lectura-y-monitoreo-de-logs-en-vivo)
    - [Búsqueda de Archivos y Texto](#32-búsqueda-de-archivos-y-texto)
@@ -118,28 +119,152 @@ nano .env
 
 ---
 
-### 2.2 Gestión de Paquetes y Software
+### 2.2 Gestión de Paquetes, Dependencias y Software
 
-En Ubuntu / Debian, el gestor oficial es `apt`:
+En Ubuntu / Debian, el gestor oficial de paquetes es `apt`:
 
 ```bash
-# 1. Actualizar la lista de programas disponibles
+# 1. Actualizar el índice/lista de programas disponibles en los repositorios
 sudo apt update
 
-# 2. Actualizar los programas instalados a su última versión
+# 2. Actualizar todos los programas instalados a su última versión segura
 sudo apt upgrade -y
 
-# 3. Instalar un nuevo programa (ej. Nginx, Git, Htop, Unzip)
+# 3. Actualizar un paquete individual sin tocar el resto del sistema (ej: curl o nginx)
+sudo apt --only-upgrade install curl nginx -y
+
+# 4. Instalar un nuevo programa o herramienta (ej: Nginx, Git, Htop, Unzip)
 sudo apt install -y nginx git htop unzip
 
-# 4. Desinstalar un programa y limpiar basura sobrante
+# 5. Ver qué paquetes tienen actualizaciones pendientes
+apt list --upgradable
+
+# 6. Desinstalar un programa y limpiar dependencias huérfanas o basura residual
 sudo apt remove nginx
+sudo apt autoremove -y       # Borra dependencias viejas que ya ningún programa usa
+sudo apt clean               # Vacía la caché de paquetes descargados (.deb) para liberar disco
+```
+
+> [!TIP]
+> **Actualizar dependencias de desarrollo:**
+> - **Composer (PHP):** `composer self-update` (actualiza el binario de Composer) y `composer update` dentro de tu proyecto (actualiza las librerías en `vendor/`).
+> - **npm / Node:** `npm install -g npm@latest` (actualiza npm global) y `npm update` en tu proyecto.
+
+---
+
+### 2.3 Gestión Completa de PHP: Actualizar y Cambiar entre Versiones
+
+En un VPS es muy común necesitar diferentes versiones de PHP (por ejemplo, tener un proyecto antiguo en PHP 7.4 u 8.0 y otro moderno en PHP 8.2 u 8.3), o actualizar a una versión superior.
+
+#### Paso A: Agregar el repositorio oficial de PHP (Ondřej Surý PPA)
+Por defecto, Ubuntu solo incluye una versión de PHP en sus repositorios oficiales. Para tener acceso a **todas las versiones** (7.4, 8.0, 8.1, 8.2, 8.3, 8.4):
+
+```bash
+# Instalar utilidades previas
+sudo apt install -y software-properties-common ca-certificates lsb-release apt-transport-https
+
+# Añadir el repositorio de PHP más confiable del ecosistema Linux:
+sudo add-apt-repository ppa:ondrej/php -y
+sudo apt update
+```
+
+---
+
+#### Paso B: Instalar una nueva versión de PHP y sus extensiones esenciales
+Por ejemplo, para instalar **PHP 8.3** junto a FPM (para Nginx) y los módulos que requieren Laravel, WordPress o APIs:
+
+```bash
+sudo apt install -y php8.3 php8.3-fpm php8.3-cli php8.3-common \
+php8.3-mysql php8.3-xml php8.3-xmlrpc php8.3-curl php8.3-gd \
+php8.3-imagick php8.3-cli php8.3-dev php8.3-imap php8.3-mbstring \
+php8.3-opcache php8.3-soap php8.3-zip php8.3-intl php8.3-bcmath
+```
+*(Si quisieras instalar PHP 8.2, simplemente cambias `8.3` por `8.2`).*
+
+---
+
+#### Paso C: Cambiar la versión de PHP en la Terminal (CLI)
+
+Cuando ejecutas `php -v`, Linux utiliza una versión predeterminada. Si tienes varias instaladas, puedes alternar de dos formas:
+
+**Método 1: Menú interactivo guiado (Recomendado)**
+```bash
+sudo update-alternatives --config php
+```
+Verás una lista numerada en tu terminal:
+```text
+  Selection    Path             Priority   Status
+------------------------------------------------------------
+* 0            /usr/bin/php8.1   81        auto mode
+  1            /usr/bin/php7.4   74        manual mode
+  2            /usr/bin/php8.1   81        manual mode
+  3            /usr/bin/php8.3   83        manual mode
+
+Press <enter> to keep the current choice[*], or type selection number: 3
+```
+Escribe el número correspondiente (ej: `3`) y presiona `Enter`.
+
+**Método 2: Cambio directo por comando:**
+```bash
+sudo update-alternatives --set php /usr/bin/php8.3
+```
+
+Verifica el cambio:
+```bash
+php -v
+```
+
+---
+
+#### Paso D: Cambiar la versión de PHP en tu Servidor Web (Nginx o Apache)
+
+Cambiar la versión en la terminal (`CLI`) **no cambia automáticamente la versión que procesa tu sitio web**.
+
+##### Si usas Nginx (con PHP-FPM):
+Nginx se comunica con PHP a través de un socket Unix de PHP-FPM.
+1. Abre la configuración de tu sitio web (ej: `/etc/nginx/sites-available/misitio.com` o en tu panel):
+   ```bash
+   sudo nano /etc/nginx/sites-available/misitio.com
+   ```
+2. Busca la línea `fastcgi_pass` y actualiza la versión del socket:
+   ```nginx
+   # Cambiar de:
+   fastcgi_pass unix:/run/php/php8.1-fpm.sock;
+
+   # A:
+   fastcgi_pass unix:/run/php/php8.3-fpm.sock;
+   ```
+3. Verifica que la sintaxis de Nginx sea válida y recarga:
+   ```bash
+   sudo nginx -t
+   sudo systemctl restart php8.3-fpm
+   sudo systemctl reload nginx
+   ```
+
+##### Si usas Apache (con mod_php):
+Desactiva el módulo viejo y activa el nuevo:
+```bash
+sudo a2dismod php8.1
+sudo a2enmod php8.3
+sudo systemctl restart apache2
+```
+
+---
+
+#### Paso E: Actualizar o Desinstalar versiones antiguas de PHP
+
+```bash
+# Actualizar los paquetes de la versión actual a sus parches más recientes:
+sudo apt update && sudo apt --only-upgrade install "php8.3*" -y
+
+# Desinstalar por completo una versión vieja que ya no uses (ej: PHP 7.4):
+sudo apt purge "php7.4*" -y
 sudo apt autoremove -y
 ```
 
 ---
 
-### 2.3 Control de Servicios (Systemd)
+### 2.4 Control de Servicios (Systemd)
 
 Casi todo programa en un VPS (Nginx, MySQL, Node, PHP-FPM, Docker) corre como un servicio administrado por **`systemctl`**:
 
@@ -154,7 +279,7 @@ sudo systemctl enable nginx     # Hacer que arranque automáticamente si el VPS 
 
 ---
 
-### 2.4 Monitoreo de Recursos en Vivo
+### 2.5 Monitoreo de Recursos en Vivo
 
 #### `df -h` *(Disk Free)*
 Te muestra cuánto espacio te queda en el disco duro:
@@ -181,7 +306,7 @@ htop
 
 ---
 
-### 2.5 Seguridad y Firewall
+### 2.6 Seguridad y Firewall
 
 #### `ufw` *(Uncomplicated Firewall)*
 El cortafuegos indispensable en cualquier VPS:
