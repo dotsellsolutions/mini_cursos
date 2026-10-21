@@ -13,7 +13,8 @@ Esta guía está diseñada para que domines Git tanto en tu computadora local (W
 6. [Monorepos: Descargar solo una Carpeta Específica (Sparse-Checkout)](#6-monorepos-descargar-solo-una-carpeta-específica-sparse-checkout)
 7. [Deshacer Errores y Volver Atrás](#7-deshacer-errores-y-volver-atrás)
 8. [Autenticación con GitHub sin Contraseñas (Tokens y Credenciales)](#8-autenticación-con-github-sin-contraseñas-tokens-y-credenciales)
-9. [Chuleta / Resumen Rápido de Comandos](#9-chuleta--resumen-rápido-de-comandos)
+9. [Cambiar de Usuario o URL del Repositorio (Solución a `remote: Repository not found`)](#9-cambiar-de-usuario-o-url-del-repositorio-solución-a-remote-repository-not-found)
+10. [Chuleta / Resumen Rápido de Comandos](#10-chuleta--resumen-rápido-de-comandos)
 
 ---
 
@@ -298,7 +299,76 @@ Con SSH no necesitas tokens ni contraseñas temporales; se basa en llaves cripto
 
 ---
 
-## 9. Chuleta / Resumen Rápido de Comandos
+## 9. Cambiar de Usuario o URL del Repositorio (Solución a `remote: Repository not found`)
+
+Si cambiaste tu nombre de usuario en GitHub, transferiste el repositorio a otra cuenta/organización, o creaste una cuenta nueva, al hacer `git push` o `git pull` verás el siguiente error:
+```text
+remote: Repository not found.
+fatal: repository 'https://github.com/USUARIO_VIEJO/repo.git/' not found
+```
+
+Esto ocurre por dos motivos:
+1. Tu repositorio local sigue apuntando a la URL del usuario anterior.
+2. Tu computadora o VPS tiene guardadas en caché las credenciales del usuario anterior (el cual ya no tiene permisos sobre el repositorio).
+
+---
+
+### Paso 1: Ver a qué URL apunta tu repositorio
+Dentro de la carpeta del proyecto, ejecuta:
+```bash
+git remote -v
+```
+
+---
+
+### Paso 2: Actualizar la URL con el nuevo usuario
+Ejecuta `git remote set-url`:
+
+* **Si usas conexión por HTTPS:**
+  ```bash
+  git remote set-url origin https://github.com/NUEVO_USUARIO/TU_REPOSITORIO.git
+  ```
+* **Si usas conexión por SSH:**
+  ```bash
+  git remote set-url origin git@github.com:NUEVO_USUARIO/TU_REPOSITORIO.git
+  ```
+
+Confirma que la URL cambió ejecutando nuevamente `git remote -v`.
+
+---
+
+### Paso 3: Actualizar las credenciales guardadas
+
+Si tras cambiar la URL aún te sigue arrojando el error `Repository not found`, tu gestor de credenciales sigue enviando el token o contraseña del usuario anterior.
+
+#### En Windows (Tu computadora local):
+1. Presiona la tecla `Windows` y escribe **Administrador de credenciales** (*Credential Manager*).
+2. Haz clic en **Credenciales de Windows**.
+3. En la sección **Credenciales genéricas**, busca cualquier entrada que comience por:
+   - `git:https://github.com`
+4. Selecciónala y haz clic en **Quitar** (o en **Editar** para escribir tu nuevo usuario y nuevo Token `ghp_...`).
+5. Abre de nuevo tu terminal y corre:
+   ```bash
+   git pull
+   ```
+   Git te pedirá que inicies sesión con tu cuenta nueva o que pegues el nuevo token, y lo guardará automáticamente.
+
+#### En tu VPS o Servidor Linux:
+Si habías activado `credential.helper store`, las credenciales se almacenan en un archivo de texto en tu carpeta de usuario:
+
+```bash
+# Editar el archivo de credenciales de Git
+nano ~/.git-credentials
+```
+Modifica la línea correspondiente con tu nuevo usuario y nuevo token:
+```text
+https://NUEVO_USUARIO:ghp_TU_NUEVO_TOKEN@github.com
+```
+*(Guarda con `Ctrl + O`, `Enter` y sal con `Ctrl + X`)*.
+
+---
+
+## 10. Chuleta / Resumen Rápido de Comandos
 
 ```bash
 # Estado e Inspección
