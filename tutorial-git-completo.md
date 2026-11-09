@@ -120,13 +120,32 @@ Thumbs.db
 .idea/
 ```
 
-> ⚠️ **¿Qué pasa si ya subiste un archivo por error y ahora quieres ignorarlo?**
-> Git ya lo está rastreando, por lo que agregarlo a `.gitignore` no lo borrará del historial. Para dejar de rastrearlo sin borrar el archivo de tu disco:
-> ```bash
-> git rm --cached .env
-> git commit -m "fix: dejar de rastrear .env"
-> git push
-> ```
+### ⚠️ Emergencia: "¿Qué hago si subí el `.env` o contraseñas por error a GitHub?"
+
+Si subiste un archivo sensible (como tu `.env` con credenciales de base de datos, contraseñas de correo SMTP, API Keys, etc.) y luego agregas `.env` al `.gitignore`, **Git seguirá rastreándolo** y la contraseña seguirá visible para cualquiera en el historial de commits.
+
+Debes seguir estos **3 pasos obligatorios de seguridad**:
+
+1. **Añadir el archivo a tu `.gitignore`:**
+   Asegúrate de que la línea `.env` esté escrita dentro del archivo `.gitignore`.
+
+2. **Quitarlo del índice de Git sin borrarlo de tu computadora:**
+   ```bash
+   # Remueve el archivo del control de Git pero lo conserva intacto en tu disco local:
+   git rm --cached .env
+
+   # Para carpetas completas que se subieron por error (ej: node_modules):
+   # git rm -r --cached node_modules
+
+   # Guardar y subir el cambio:
+   git commit -m "security: remover .env del repositorio y dejar de rastrear"
+   git push origin main
+   ```
+
+3. **Cambiar INMEDIATAMENTE las contraseñas expuestas:**
+   > [!CAUTION]
+   > Aunque el archivo ya no aparezca en la lista de archivos de GitHub, **sigue existiendo en el historial de commits anteriores** (cualquiera puede hacer clic en los commits viejos y leer tus claves).
+   > Por seguridad profesional, **debes cambiar la contraseña del correo (SMTP), la contraseña de la base de datos o revocar las API Keys de inmediato**, asumiendo que ya quedaron comprometidas.
 
 ---
 
