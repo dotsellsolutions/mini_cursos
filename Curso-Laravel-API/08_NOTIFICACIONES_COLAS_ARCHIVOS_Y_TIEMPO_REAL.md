@@ -213,11 +213,14 @@ Esto conecta `public/storage` con `storage/app/public`.
 
 ### Paso 2: Guardar, actualizar y borrar la foto en `ProductController.php`
 ```php
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 
 public function store(StoreProductRequest $request)
 {
-    $datos = $request->validated();
+    // Quitamos 'imagen' (es el archivo subido, no una columna) y asignamos el vendedor dueño del producto
+    $datos = $request->safe()->except('imagen');
+    $datos['user_id'] = $request->user()->id;
 
     // ¿El vendedor adjuntó un archivo en el campo 'imagen'?
     if ($request->hasFile('imagen')) {
@@ -228,13 +231,16 @@ public function store(StoreProductRequest $request)
     }
 
     $producto = Product::create($datos);
-    return new ProductResource($producto);
+
+    return (new ProductResource($producto))->response()->setStatusCode(201);
 }
 
 // ¿Y si al editar el producto sube una foto nueva? Borramos la foto vieja para no llenar el disco:
 public function update(StoreProductRequest $request, Product $product)
 {
-    $datos = $request->validated();
+    Gate::authorize('update', $product); // Solo el dueño o un admin (Policy del Módulo 7)
+
+    $datos = $request->safe()->except('imagen');
 
     if ($request->hasFile('imagen')) {
         // 1. Si ya tenía una foto anterior, la borramos del disco
@@ -361,7 +367,7 @@ Cuando en tu controlador ejecutas `NuevoPedidoEnVivoEvent::dispatch($pedido);`, 
 
 ## 🎓 Resumen Final: El Flujo Completo de una Petición en TechStore API
 
-Para cerrar el curso, mira cómo encajan **todas las piezas que has aprendido** desde que el cliente pulsa "Comprar" en su celular hasta que recibe el JSON de confirmación:
+Para cerrar este bloque, mira cómo encajan **todas las piezas que has aprendido** desde que el cliente pulsa "Comprar" en su celular hasta que recibe el JSON de confirmación:
 
 ```
 1. 📱 El Celular envía: POST /api/orders (con Header "Authorization: Bearer 1|xyz..." y "Accept: application/json")
@@ -388,4 +394,4 @@ Para cerrar el curso, mira cómo encajan **todas las piezas que has aprendido** 
 10. 📦 Devuelve al celular un JSON impecable con código "201 Created" en menos de 50 milisegundos.
 ```
 
-¡Felicidades! Ahora tienes en tu carpeta `c:\wamp64\www\appControl\Tutorials` una guía maestra de referencia completa para crear cualquier API profesional con Laravel.
+👉 **Siguiente paso:** En el **[Módulo 9: Testing Automático de la API](./09_TESTING_AUTOMATICO_DE_LA_API.md)** aprenderás a escribir tests que comprueben todo este flujo en segundos cada vez que cambies el código, y en el **[Módulo 10](./10_BUENAS_PRACTICAS_Y_DESPLIEGUE_A_PRODUCCION.md)** a publicar TechStore API en un servidor real.

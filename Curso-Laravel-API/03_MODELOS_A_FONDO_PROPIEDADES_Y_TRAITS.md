@@ -240,11 +240,12 @@ Recuerdas que arriba pusimos `protected $appends = ['precio_con_iva', 'disponibl
 ```php
 use Illuminate\Database\Eloquent\Casts\Attribute;
 
-// 1. Campo virtual: calcula el precio + 21% de IVA al vuelo para el JSON
+// 1. Campo virtual: calcula el precio + IVA al vuelo para el JSON
+// El % de IVA se lee de config/techstore.php (Módulo 1), nunca "quemado" en el código
 protected function precioConIva(): Attribute
 {
     return Attribute::make(
-        get: fn () => round($this->precio * 1.21, 2),
+        get: fn () => round($this->precio * (1 + config('techstore.impuestos.iva', 0.21)), 2),
     );
 }
 
@@ -389,7 +390,7 @@ class Product extends Model
     protected function precioConIva(): Attribute
     {
         return Attribute::make(
-            get: fn () => round($this->precio * 1.21, 2),
+            get: fn () => round($this->precio * (1 + config('techstore.impuestos.iva', 0.21)), 2),
         );
     }
 

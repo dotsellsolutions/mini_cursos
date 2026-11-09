@@ -167,7 +167,7 @@ class ProductResource extends JsonResource
             'precios' => [
                 'sin_impuestos' => (float) $this->precio,
                 'con_iva' => $this->precio_con_iva,
-                'moneda' => 'USD',
+                'moneda' => config('techstore.moneda'), // Desde config/techstore.php (Módulo 1)
             ],
             'inventario' => [
                 'stock_actual' => $this->stock,
@@ -245,7 +245,8 @@ class ProductController extends Controller
     public function store(StoreProductRequest $request)
     {
         // Si el código llega a esta línea, los datos YA están 100% validados por StoreProductRequest
-        $datosValidados = $request->validated();
+        // safe()->except('imagen'): el archivo no es una columna de la tabla (la foto se gestiona en el Módulo 8)
+        $datosValidados = $request->safe()->except('imagen');
         $datosValidados['user_id'] = $request->user()->id;
 
         $producto = Product::create($datosValidados);

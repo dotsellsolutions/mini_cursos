@@ -104,3 +104,26 @@ Cada archivo en esta carpeta es un capítulo completo. Te recomiendo leerlos en 
    * **Colas (`Jobs`):** Tareas en segundo plano para que tu API sea ultrarrápida.
    * **Subida de fotos (`Storage`):** Guardar imágenes de productos, `storage:link` y devolver su URL.
    * **Consumo de otras APIs (`Http`)**, **Manejo global de errores en JSON** y **Tiempo real (WebSockets)**.
+9. **[09_TESTING_AUTOMATICO_DE_LA_API.md](./09_TESTING_AUTOMATICO_DE_LA_API.md)**
+   * **Tests automáticos con Pest** (y su equivalente en PHPUnit): *Feature* vs *Unit*, base de datos SQLite en memoria y `RefreshDatabase`.
+   * Testear rutas protegidas con `Sanctum::actingAs`, Policies (`403`) y validaciones (`422`) con *datasets*.
+   * *Fakes* para correos, notificaciones, colas, archivos y APIs externas (`Notification::fake`, `Storage::fake`, `Http::fake`...) y CI con **GitHub Actions**.
+10. **[10_BUENAS_PRACTICAS_Y_DESPLIEGUE_A_PRODUCCION.md](./10_BUENAS_PRACTICAS_Y_DESPLIEGUE_A_PRODUCCION.md)**
+   * **Versionado** (`/api/v1`), formato de respuesta consistente y paginación profesional (`cursorPaginate`).
+   * **Documentación automática** (Scramble / Scribe) y **rendimiento** (caché, índices, `Model::shouldBeStrict`, Telescope y Pulse).
+   * **Despliegue en VPS** paso a paso: Nginx, `php artisan optimize`, Supervisor para colas, cron del Scheduler, script de deploy y checklist de seguridad.
+   * 🏋️ **Proyecto final propuesto:** módulo de cupones de descuento para practicar todo lo aprendido.
+
+---
+
+## 4. Requisitos y cómo seguir el curso
+
+* **PHP 8.2+**, **Composer** y **MySQL/MariaDB** (WAMP, XAMPP, Laragon o Laravel Herd sirven perfectamente).
+* Los ejemplos están escritos para **Laravel 11 y 12**. Cuando algo cambia respecto a Laravel 10 o anteriores, se indica en el propio módulo.
+* Un cliente para probar la API: **Postman**, **Insomnia**, **Bruno** o la extensión *Thunder Client* de VS Code. Recuerda enviar siempre el Header `Accept: application/json`.
+* Crea el proyecto con:
+  ```bash
+  composer create-project laravel/laravel techstore-api
+  cd techstore-api
+  php artisan install:api
+  ```

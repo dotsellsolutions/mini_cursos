@@ -51,7 +51,7 @@ Aquí vive toda la lógica de negocio de **TechStore API**. Dentro de `app/` enc
 
 ---
 
-### 3. Carpeta `config/` (El panel de control)
+### 3. Carpeta `config/` y Cómo Crear tu Propia Configuración (`/config/techstore.php`)
 Contiene archivos llenos de opciones para cada parte de Laravel:
 * `config/app.php`: Nombre de tu app, zona horaria (`timezone`), idioma (`locale`).
 * `config/auth.php`: Configuración de quiénes inician sesión.
@@ -60,7 +60,71 @@ Contiene archivos llenos de opciones para cada parte de Laravel:
 * `config/filesystems.php`: Dónde se guardan las fotos de los productos (en tu servidor local o en la nube como Amazon S3).
 * `config/sanctum.php`: Ajustes de los tokens de seguridad de tu API.
 
-> **Regla de oro:** Casi nunca editas los archivos de `config/` directamente; ellos leen los valores desde tu archivo `.env`.
+#### 🔥 Cómo crear y usar tu propio archivo de configuración personalizado (`config/techstore.php`)
+En **TechStore API** tenemos reglas de negocio fijas: cuánto es el porcentaje de IVA (`0.21`), a partir de qué monto el envío es gratis (`$100`), cuál es la comisión que cobra la tienda a cada vendedor (`10%`) o cuántos intentos máximos de pago permitimos.
+Si dejas esos números "quemados" (*hardcoded*) repartidos por 20 modelos y controladores, el día que el IVA cambie tendrás que buscar archivo por archivo.
+
+Para eso puedes crear **cualquier archivo `.php` dentro de la carpeta `config/`** (por ejemplo, `config/techstore.php`), y Laravel lo detectará automáticamente sin que tengas que registrarlo en ningún sitio.
+
+**Paso 1: Definir variables en tu archivo `.env` (Opcional, para lo que cambie entre tu PC y el servidor real)**
+```env
+TECHSTORE_MONEDA=USD
+TECHSTORE_IVA=0.21
+TECHSTORE_ENVIO_GRATIS_DESDE=100
+```
+
+**Paso 2: Crear el archivo `config/techstore.php`**
+Un archivo de configuración en Laravel es simplemente un archivo PHP que hace `return [...]` de un array:
+
+```php
+<?php
+// Archivo: config/techstore.php
+
+return [
+    // env('NOMBRE_EN_ENV', 'valor_por_defecto_si_no_existe_en_env')
+    'moneda' => env('TECHSTORE_MONEDA', 'USD'),
+
+    'impuestos' => [
+        'iva' => (float) env('TECHSTORE_IVA', 0.21),
+        'incluir_en_catalogo' => true,
+    ],
+
+    'envios' => [
+        'costo_estandar' => 9.99,
+        'gratis_desde' => (float) env('TECHSTORE_ENVIO_GRATIS_DESDE', 100.00),
+    ],
+
+    'comision_vendedor_porcentaje' => 10,
+];
+```
+
+**Paso 3: ¿Cómo se lee desde cualquier Modelo, Controlador o Resource? Con la función `config()`**
+Usas la **notación de punto**: `'nombre_del_archivo.clave.subclave'`:
+
+```php
+// 1. Leer un valor de primer nivel (archivo 'techstore.php' -> clave 'moneda'):
+$moneda = config('techstore.moneda'); // Devuelve "USD"
+
+// 2. Leer un valor anidado (archivo 'techstore.php' -> 'impuestos' -> 'iva'):
+$iva = config('techstore.impuestos.iva'); // Devuelve 0.21
+
+// Ejemplo real en nuestro Accessor de Product.php (Módulo 3):
+protected function precioConIva(): Attribute
+{
+    $iva = config('techstore.impuestos.iva', 0.21); // El 2º parámetro es un valor de respaldo
+    return Attribute::make(
+        get: fn () => round($this->precio * (1 + $iva), 2),
+    );
+}
+
+// 3. ¿Se puede cambiar un valor de config en caliente durante una petición? ¡Sí!
+// Si un usuario europeo entra a la API, cambiamos la moneda solo durante su petición:
+config(['techstore.moneda' => 'EUR']);
+```
+
+> ⚠️ **LA REGLA DE ORO ENTRE `env()` Y `config()`:**
+> **¡NUNCA uses `env('...')` dentro de tus Controladores o Modelos!** Usa `env()` **únicamente** dentro de los archivos de la carpeta `config/`.
+> **¿Por qué?** Porque cuando subes tu API a un servidor de producción, se ejecuta el comando `php artisan config:cache` para que la web vaya más rápida. Al hacer eso, Laravel fusiona todos los archivos de `config/` en uno solo y **deja de leer el archivo `.env`**. Si pusiste `env('TECHSTORE_IVA')` dentro de un Controlador, en producción devolverá `null` y romperá tus cálculos. En cambio, `config('techstore.impuestos.iva')` funcionará siempre al 100%.
 
 ---
 
@@ -273,6 +337,83 @@ class CancelarPedidosVencidos extends Command
   // Se ejecutará automáticamente todos los días a la medianoche (00:00)
   Schedule::command('techstore:limpiar-pedidos 24 --notificar')->daily();
   ```
+
+---
+
+### 4. `Artisan::command` y `Artisan::call`: Comandos rápidos y ejecución desde código
+
+Además de crear una clase entera en `app/Console/Commands/`, Laravel tiene la fachada **`Artisan`** que te permite hacer dos cosas comodísimas:
+
+#### A) `Artisan::command(...)`: Crear comandos rápidos en `routes/console.php` (Sin crear clases)
+¿Qué pasa si quieres un comando sencillo de 5 líneas para ver un resumen de ventas de **TechStore** o darle rol de administrador a un usuario desde la terminal, y te da pereza crear un archivo nuevo en `app/Console/Commands/`?
+
+Abres directamente **`routes/console.php`** y usas **`Artisan::command`**. Funciona igualito que cuando defines una ruta `Route::get`, pero para la terminal:
+
+```php
+// Archivo: routes/console.php
+use Illuminate\Support\Facades\Artisan;
+use App\Models\User;
+use App\Models\Order;
+
+// Ejemplo 1: Comando con parámetro directo en la función ($email)
+Artisan::command('techstore:hacer-admin {email}', function (string $email) {
+    $user = User::where('email', $email)->first();
+
+    if (! $user) {
+        // $this->error() imprime en color ROJO en la terminal
+        $this->error("No existe ningún usuario con el correo: {$email}");
+        return;
+    }
+
+    $user->update(['role' => 'admin']);
+    // $this->info() imprime en color VERDE en la terminal
+    $this->info("¡Listo! {$user->name} ahora es Administrador de TechStore.");
+})->purpose('Convierte a cualquier usuario en Administrador indicando su email');
+
+// Ejemplo 2: Comando interactivo (pregunta datos al usuario en la terminal) y programado cada día
+Artisan::command('techstore:estadisticas', function () {
+    $totalVentas = Order::where('estado', 'pagado')->sum('total');
+    $pedidosHoy = Order::whereDate('created_at', today())->count();
+
+    // Imprime una tabla bonita directamente en la consola:
+    $this->table(
+        ['Métrica de TechStore', 'Valor'],
+        [
+            ['Ingresos Totales Pagados', '$' . $totalVentas],
+            ['Pedidos Recibidos Hoy', $pedidosHoy],
+        ]
+    );
+})->purpose('Muestra una tabla resumen de las ventas de TechStore')->dailyAt('08:00');
+```
+* Fíjate cómo dentro de `Artisan::command`:
+  * Los parámetros `{email}` se reciben directamente como variables en `function (string $email)`.
+  * Tienes acceso a `$this->info()`, `$this->error()`, `$this->warn()`, `$this->ask('¿Estás seguro?')` y `$this->table()`.
+  * Puedes encadenarle `->purpose('...')` (la descripción para `php artisan list`) e incluso `->dailyAt('08:00')` o `->hourly()` al final para dejarlo programado en el mismo sitio.
+
+#### B) `Artisan::call(...)`: Ejecutar un comando Artisan desde un Controlador de tu API
+Imagina que en el panel de Administrador de **TechStore** quieres poner un botón que diga *"Limpiar pedidos vencidos ahora mismo"*, y cuando el Admin lo pulse (llamando a `POST /api/admin/limpiar-pedidos`), tu controlador ejecute el comando Artisan por detrás:
+
+```php
+use Illuminate\Support\Facades\Artisan;
+
+public function forzarLimpiezaPedidos()
+{
+    // Ejecuta el comando pasando sus argumentos y opciones en un array:
+    Artisan::call('techstore:limpiar-pedidos', [
+        'horas' => 12,
+        '--notificar' => true,
+    ]);
+
+    // Artisan::output() recoge el texto que imprimió el comando en la consola
+    $resultadoConsola = Artisan::output();
+
+    return response()->json([
+        'mensaje' => 'Comando ejecutado correctamente desde la API',
+        'salida_consola' => trim($resultadoConsola),
+    ]);
+}
+```
+*(Y si el comando tarda mucho y quieres que se ejecute en segundo plano sin hacer esperar al Admin, usas **`Artisan::queue('techstore:limpiar-pedidos', ['horas' => 12])`**).*
 
 ---
 
