@@ -75,6 +75,8 @@ Cada archivo en esta carpeta es un capítulo completo. Te recomiendo leerlos en 
    * La consola **Artisan** explicada comando por comando, `tinker` y cómo crear tus propios comandos automáticos.
 2. **[02_MIGRACIONES_FACTORIES_Y_SEEDERS.md](./02_MIGRACIONES_FACTORIES_Y_SEEDERS.md)**
    * Cómo construir las tablas de **TechStore** sin escribir SQL.
+   * Crear tablas desde Artisan (`make:migration`) y **modificar tablas existentes**: añadir, cambiar (`->change()`), renombrar y borrar columnas, índices y llaves foráneas.
+   * Todos los comandos `migrate` (`status`, `rollback --step`, `--pretend`, `fresh`...) y cuáles son seguros en producción.
    * Todos los tipos de datos, llaves foráneas (`foreignId`) y cómo inventar cientos de productos de prueba con `HasFactory`.
 3. **[03_MODELOS_A_FONDO_PROPIEDADES_Y_TRAITS.md](./03_MODELOS_A_FONDO_PROPIEDADES_Y_TRAITS.md)**
    * **Desglose total del Modelo:** Qué significan `HasFactory`, `Notifiable`, `HasApiTokens`, `SoftDeletes`.

@@ -213,9 +213,14 @@ php artisan nombre-del-comando
 * **`php artisan make:job ProcessInvoiceJob`**: Crea una tarea en segundo plano.
 
 #### C) Comandos de Base de Datos (`migrate`)
+* **`php artisan make:migration create_coupons_table`**: Crea el archivo para **una tabla nueva** (Laravel deduce el nombre `coupons` por el patrón `create_xxx_table`).
+* **`php artisan make:migration add_descuento_to_products_table`**: Crea el archivo para **añadir columnas a una tabla que ya existe** (patrón `add_xxx_to_tabla_table`).
+* **`php artisan migrate:status`**: Muestra qué migraciones ya se ejecutaron y cuáles están pendientes.
 * **`php artisan migrate`**: Lee tus archivos de migraciones nuevos y crea las tablas en la base de datos.
 * **`php artisan migrate:rollback`**: Deshace el último grupo de migraciones (por si te equivocaste en una columna).
 * **`php artisan migrate:fresh --seed`**: **¡El favorito mientras estás desarrollando!** Borra todas las tablas, las vuelve a crear desde cero limpias y ejecuta los *Seeders* para llenarla con tus datos de prueba. *(¡Nunca lo uses en producción con clientes reales porque borra todo!)*.
+
+> 📚 La guía completa para crear tablas y para añadir, modificar, renombrar y borrar columnas (con todos los comandos `migrate`) está en el **[Módulo 2, apartado 3](./02_MIGRACIONES_FACTORIES_Y_SEEDERS.md#3-del-comando-artisan-a-la-tabla-crear-y-modificar-tablas-y-columnas)**.
 
 #### D) El comando salvavidas cuando Laravel "no hace caso"
 A veces cambias algo en el archivo `.env` o agregas una ruta y parece que Laravel no se entera porque guardó la versión anterior en memoria caché. Ejecuta esto y limpia todo de golpe:
