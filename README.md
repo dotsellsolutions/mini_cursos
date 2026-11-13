@@ -46,6 +46,21 @@ Colección práctica de guías y tutoriales técnicos enfocados en administraci�
 
 ---
 
+## 🗃️ Curso de SQL para DBA (MySQL / MariaDB)
+- [Índice del curso y base de datos de práctica `tienda_dba`](Curso-SQL-DBA/00_INDICE_Y_BASE_DE_DATOS_DE_PRACTICA.md)
+- [01 · Fundamentos: bases de datos, tablas y tipos de datos](Curso-SQL-DBA/01_FUNDAMENTOS_BASES_DE_DATOS_TABLAS_Y_TIPOS.md)
+- [02 · CRUD: INSERT, SELECT, UPDATE y DELETE](Curso-SQL-DBA/02_CRUD_INSERT_SELECT_UPDATE_DELETE.md)
+- [03 · Funciones, agregación, GROUP BY y HAVING](Curso-SQL-DBA/03_FUNCIONES_AGREGACION_GROUP_BY_Y_HAVING.md)
+- [04 · JOINs, subconsultas y UNION](Curso-SQL-DBA/04_JOINS_SUBCONSULTAS_Y_UNION.md)
+- [05 · SQL avanzado: CTE, funciones de ventana y JSON](Curso-SQL-DBA/05_SQL_AVANZADO_CTE_WINDOW_FUNCTIONS_Y_JSON.md)
+- [06 · Vistas, procedimientos, funciones, triggers y eventos](Curso-SQL-DBA/06_VISTAS_PROCEDIMIENTOS_FUNCIONES_TRIGGERS_Y_EVENTOS.md)
+- [07 · Transacciones, bloqueos y concurrencia](Curso-SQL-DBA/07_TRANSACCIONES_BLOQUEOS_Y_CONCURRENCIA.md)
+- [08 · Índices, EXPLAIN y optimización](Curso-SQL-DBA/08_INDICES_EXPLAIN_Y_OPTIMIZACION.md)
+- [09 · Usuarios, permisos, roles y seguridad](Curso-SQL-DBA/09_USUARIOS_PERMISOS_ROLES_Y_SEGURIDAD.md)
+- [10 · Backups, recuperación, replicación y monitoreo](Curso-SQL-DBA/10_BACKUPS_RECUPERACION_REPLICACION_Y_MONITOREO.md)
+
+---
+
 ## 🐳 Docker, Herramientas y Utilidades
 - [Instalar y Configurar Docker en Windows](file:///c:/wamp64/www/appControl/Tutorials/instalar-y-configurar-docker-en-windows.md)
 - [Instalar n8n Local para Pruebas](file:///c:/wamp64/www/appControl/Tutorials/instalar-n8n-local-pruebas.md)
